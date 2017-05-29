@@ -7,6 +7,8 @@ import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.kie.internal.io.ResourceFactory;
 import org.kie.spring.KModuleBeanFactoryPostProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +23,7 @@ import java.io.IOException;
 public class DroolsAutoConfiguration {
 
     private static final String RULES_PATH = "rules/";
+    private static final Logger RULES_LOGGER = LoggerFactory.getLogger("ValidationRulesEngine");
 
     @Bean
     PersistenceExceptionTranslationPostProcessor persistenceExceptionTranslationPostProcessor() {
@@ -47,11 +50,7 @@ public class DroolsAutoConfiguration {
     public KieContainer kieContainer() throws IOException {
         final KieRepository kieRepository = getKieServices().getRepository();
 
-        kieRepository.addKieModule(new KieModule() {
-            public ReleaseId getReleaseId() {
-                return kieRepository.getDefaultReleaseId();
-            }
-        });
+        kieRepository.addKieModule(() -> kieRepository.getDefaultReleaseId());
 
         KieBuilder kieBuilder = getKieServices().newKieBuilder(kieFileSystem());
         kieBuilder.buildAll();
@@ -72,7 +71,9 @@ public class DroolsAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(KieSession.class)
     public KieSession kieSession() throws IOException {
-        return kieContainer().newKieSession();
+        KieSession session = kieContainer().newKieSession();
+        session.setGlobal("logger", RULES_LOGGER);
+        return session;
     }
 
     @Bean

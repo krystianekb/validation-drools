@@ -1,8 +1,20 @@
 package org.drools.workshop;
 
+import org.slf4j.Logger;
+
+import org.krystianekb.poc.validation.domain.Trade;
+import org.krystianekb.poc.validation.domain.result.ValidationResult;
+import org.krystianekb.poc.validation.domain.result.ValidationRuleResult;
+import org.krystianekb.poc.validation.domain.result.ValidationRuleStatus;
+
+global org.slf4j.Logger logger;
+
 rule "My First Drools Rule"
   when
-    $o: Object()
+    $o: Trade()
+    $a: ValidationResult()
   then
-    System.out.println("Rule Fired for Object: "+$o.toString());
+    logger.debug("Rule Fired for Object: {}",$o.toString());
+    ValidationRuleResult $res = new ValidationRuleResult("DummyRule", ValidationRuleStatus.SUCCESS);
+    $a.addResult($res);
 end
